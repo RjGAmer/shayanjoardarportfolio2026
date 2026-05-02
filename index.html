@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shayan Joardar — .NET Developer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #020409;
+  --surface: #060c18;
+  --card: #0a1628;
+  --accent: #00d4ff;
+  --accent2: #7000ff;
+  --accent3: #ff006e;
+  --neon: #39ff14;
+  --text: #c8d8f0;
+  --muted: #4a6080;
+  --border: rgba(0,212,255,0.12);
+  --glow: 0 0 60px rgba(0,212,255,0.2);
+  --glow2: 0 0 60px rgba(112,0,255,0.2);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CUSTOM CURSOR */
+#cursor {
+  position: fixed; top:0; left:0; z-index:9999;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: transform 0.1s;
+  box-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent);
+}
+#cursor-ring {
+  position: fixed; top:0; left:0; z-index:9998;
+  width: 40px; height: 40px;
+  border: 1px solid rgba(0,212,255,0.6);
+  border-radius: 50%;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94), width 0.3s, height 0.3s, border-color 0.3s;
+}
+#cursor-ring.hovering {
+  width: 60px; height: 60px;
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.05);
+}
+
+/* THREE.JS CANVAS */
+#bg-canvas {
+  position: fixed; top:0; left:0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* SCANLINE OVERLAY */
+body::after {
+  content: '';
+  position: fixed; inset:0; z-index:1;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+}
+
+/* NOISE */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:1;
+  opacity:0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+
+/* NAV */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  display: flex; align-items:center; justify-content:space-between;
+  padding: 1.25rem 4rem;
+  background: rgba(2,4,9,0.6);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem; font-weight: 900;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px var(--accent);
+}
+.nav-links { display:flex; gap:2rem; list-style:none; align-items:center; }
+.nav-links a {
+  color: var(--muted); text-decoration:none;
+  font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase;
+  font-family:'Share Tech Mono', monospace;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+.nav-links a:hover { color: var(--accent); text-shadow: 0 0 15px var(--accent); }
+
+/* HERO */
+.hero {
+  position:relative; z-index:2;
+  min-height:100vh;
+  display:grid; place-items:center;
+  padding: 8rem 4rem 4rem;
+}
+.hero-inner {
+  display:grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 5rem;
+  max-width: 1300px; width:100%;
+  align-items:center;
+}
+
+/* HOLOGRAPHIC BADGE */
+.hero-badge {
+  display: inline-flex; align-items:center; gap:0.6rem;
+  padding: 0.4rem 1rem;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 2px;
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.65rem; letter-spacing:0.2em;
+  color: var(--accent);
+  margin-bottom: 1.75rem;
+  position:relative;
+  overflow:hidden;
+}
+.hero-badge::before {
+  content:'';
+  position:absolute; top:0; left:-100%;
+  width:60%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent);
+  animation: shine 2.5s infinite;
+}
+@keyframes shine { to { left:200%; } }
+.badge-dot { width:6px; height:6px; background:var(--neon); border-radius:50%; animation:pulse 1.5s infinite; box-shadow:0 0 10px var(--neon); }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.8)} }
+
+/* GLITCH NAME */
+.hero-name {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  position:relative;
+}
+.hero-name .glitch {
+  position:relative;
+  display:inline-block;
+}
+.hero-name .glitch::before,
+.hero-name .glitch::after {
+  content: attr(data-text);
+  position:absolute; top:0; left:0;
+  width:100%; height:100%;
+  opacity:0;
+}
+.hero-name .glitch::before { color:var(--accent3); animation:glitch1 6s infinite; clip-path:polygon(0 20%, 100% 20%, 100% 40%, 0 40%); }
+.hero-name .glitch::after  { color:var(--accent);  animation:glitch2 6s infinite; clip-path:polygon(0 60%, 100% 60%, 100% 80%, 0 80%); }
+@keyframes glitch1 { 0%,90%,100%{opacity:0;transform:none} 91%{opacity:0.8;transform:translate(-3px,1px)} 93%{opacity:0.8;transform:translate(3px,-1px)} 95%{opacity:0;transform:none} }
+@keyframes glitch2 { 0%,88%,100%{opacity:0;transform:none} 89%{opacity:0.8;transform:translate(3px,2px)} 92%{opacity:0.8;transform:translate(-3px,-2px)} 94%{opacity:0;transform:none} }
+
+.hero-accent-line {
+  font-family:'Orbitron', monospace;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  color: var(--accent);
+  font-weight: 600;
+  text-shadow: 0 0 30px var(--accent);
+  letter-spacing:0.08em;
+  margin-bottom: 1.5rem;
+}
+
+.hero-desc {
+  font-size: 1rem; color: var(--muted);
+  line-height: 1.9; margin-bottom: 2.5rem;
+  max-width: 500px;
+  font-weight: 400;
+}
+
+/* CTA BUTTONS */
+.hero-cta { display:flex; gap:1rem; flex-wrap:wrap; }
+
+.btn {
+  display:inline-flex; align-items:center; gap:0.6rem;
+  padding: 0.85rem 1.75rem;
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase;
+  text-decoration:none; border-radius:3px;
+  transition: all 0.3s; cursor:none;
+  position:relative; overflow:hidden;
+}
+.btn::after {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity:0;
+  transition: opacity 0.3s;
+}
+.btn:hover::after { opacity:1; }
+
+.btn-primary {
+  background: var(--accent); color:#000; font-weight:600;
+  box-shadow: 0 0 30px rgba(0,212,255,0.4), inset 0 0 20px rgba(255,255,255,0.1);
+}
+.btn-primary:hover { transform:translateY(-3px); box-shadow: 0 0 50px rgba(0,212,255,0.7), 0 20px 40px rgba(0,212,255,0.2); }
+
+.btn-gh {
+  background: rgba(112,0,255,0.1);
+  border: 1px solid rgba(112,0,255,0.4);
+  color: #b084ff;
+  box-shadow: 0 0 20px rgba(112,0,255,0.15);
+}
+.btn-gh:hover { border-color: #7000ff; color:#c8a0ff; transform:translateY(-3px); box-shadow:0 0 40px rgba(112,0,255,0.4); }
+
+.btn-li {
+  background: rgba(0,119,181,0.1);
+  border: 1px solid rgba(0,119,181,0.4);
+  color: #60a8d0;
+}
+.btn-li:hover { border-color:#0077b5; color:#80c8f0; transform:translateY(-3px); box-shadow:0 0 40px rgba(0,119,181,0.3); }
+
+.btn-dl {
+  background: rgba(57,255,20,0.08);
+  border: 1px solid rgba(57,255,20,0.3);
+  color: var(--neon);
+}
+.btn-dl:hover { border-color:var(--neon); transform:translateY(-3px); box-shadow:0 0 40px rgba(57,255,20,0.3); }
+
+.btn-wa {
+  background: rgba(37,211,102,0.1);
+  border: 1px solid rgba(37,211,102,0.4);
+  color: #25d366;
+}
+.btn-wa:hover { border-color:#25d366; transform:translateY(-3px); box-shadow:0 0 40px rgba(37,211,102,0.3); }
+
+/* HOLOGRAPHIC CARD / 3D SCENE */
+.hero-visual {
+  position:relative; display:flex; align-items:center; justify-content:center;
+}
+.holo-card {
+  position:relative;
+  width: 380px; height: 480px;
+  transform-style: preserve-3d;
+  animation: holofloat 8s ease-in-out infinite;
+}
+@keyframes holofloat {
+  0%,100%{ transform:rotateY(-8deg) rotateX(4deg) translateY(0); }
+  33%{ transform:rotateY(5deg) rotateX(-3deg) translateY(-15px); }
+  66%{ transform:rotateY(-5deg) rotateX(6deg) translateY(-8px); }
+}
+.holo-card-inner {
+  width:100%; height:100%;
+  background: linear-gradient(135deg, rgba(10,22,40,0.95), rgba(6,12,24,0.95));
+  border: 1px solid rgba(0,212,255,0.25);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 0 0 1px rgba(0,212,255,0.1),
+    0 0 80px rgba(0,212,255,0.15),
+    0 0 160px rgba(112,0,255,0.1),
+    inset 0 0 60px rgba(0,212,255,0.03),
+    0 40px 100px rgba(0,0,0,0.7);
+  position:relative; overflow:hidden;
+}
+.holo-card-inner::before {
+  content:'';
+  position:absolute; top:-50%; left:-50%;
+  width:200%; height:200%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(0,212,255,0.05) 60deg, transparent 120deg, rgba(112,0,255,0.05) 180deg, transparent 240deg, rgba(0,212,255,0.03) 300deg, transparent 360deg);
+  animation: holospeen 8s linear infinite;
+}
+@keyframes holospeen { to { transform:rotate(360deg); } }
+.holo-card-inner::after {
+  content:'';
+  position:absolute; top:0; left:-100%;
+  width:50%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.06), transparent);
+  animation:sweepcard 4s ease-in-out infinite;
+}
+@keyframes sweepcard { to { left:200%; } }
+
+.card-corner {
+  position:absolute; width:20px; height:20px;
+  border-color: var(--accent);
+  border-style: solid;
+  opacity:0.8;
+}
+.card-corner-tl { top:12px;left:12px;border-width:2px 0 0 2px; }
+.card-corner-tr { top:12px;right:12px;border-width:2px 2px 0 0; }
+.card-corner-bl { bottom:12px;left:12px;border-width:0 0 2px 2px; }
+.card-corner-br { bottom:12px;right:12px;border-width:0 2px 2px 0; }
+
+.card-avatar {
+  width: 90px; height:90px; border-radius:50%;
+  border: 2px solid rgba(0,212,255,0.4);
+  box-shadow: 0 0 30px rgba(0,212,255,0.3), 0 0 60px rgba(112,0,255,0.15);
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, #1a2a4a, #0a1628);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron', monospace;
+  font-size:2rem; font-weight:900;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent);
+  position:relative; z-index:1;
+}
+
+.card-name {
+  font-family:'Orbitron', monospace;
+  font-size:1.1rem; font-weight:800;
+  color:#fff; margin-bottom:0.25rem;
+  letter-spacing:0.05em;
+  position:relative;z-index:1;
+}
+.card-role {
+  font-size:0.7rem; color:var(--accent);
+  letter-spacing:0.2em; text-transform:uppercase;
+  margin-bottom:1.5rem; font-family:'Share Tech Mono', monospace;
+  position:relative;z-index:1;
+}
+
+.card-stats {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:0.75rem; margin-bottom:1.5rem;
+  position:relative;z-index:1;
+}
+.stat-box {
+  background: rgba(0,212,255,0.05);
+  border: 1px solid rgba(0,212,255,0.12);
+  border-radius:6px; padding:0.75rem;
+  text-align:center;
+}
+.stat-num {
+  font-family:'Orbitron', monospace;
+  font-size:1.4rem; font-weight:800;
+  color:var(--accent);
+  text-shadow: 0 0 15px var(--accent);
+  display:block;
+}
+.stat-lbl { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
+
+.card-skills {
+  display:flex; flex-wrap:wrap; gap:0.35rem;
+  position:relative;z-index:1;
+}
+.skill-chip {
+  padding:0.2rem 0.6rem;
+  background: rgba(112,0,255,0.12);
+  border: 1px solid rgba(112,0,255,0.25);
+  border-radius:2px;
+  font-size:0.58rem; letter-spacing:0.1em;
+  color:#b084ff; text-transform:uppercase;
+  font-family:'Share Tech Mono', monospace;
+}
+
+/* SECTION */
+section { position:relative; z-index:2; padding:6rem 4rem; }
+.container { max-width:1300px; margin:0 auto; }
+
+.sec-label {
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.65rem; letter-spacing:0.3em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:0.5rem;
+  display:flex; align-items:center; gap:1rem;
+}
+.sec-label::after { content:''; flex:1; height:1px; background:linear-gradient(to right, rgba(0,212,255,0.3), transparent); }
+.sec-title {
+  font-family:'Orbitron', monospace;
+  font-size:clamp(1.8rem, 3vw, 2.6rem);
+  font-weight:800; letter-spacing:-0.02em;
+  color:#fff; margin-bottom:3rem;
+  line-height:1.15;
+}
+.sec-title span { color:var(--accent); text-shadow:0 0 30px var(--accent); }
+
+/* ABOUT */
+.about-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:4rem; align-items:center;
+}
+.about-text { font-size:1.05rem; color:var(--muted); line-height:1.9; }
+.about-text p { margin-bottom:1.25rem; }
+.about-text strong { color:var(--text); }
+
+.metrics {
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:1.25rem;
+}
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius:8px; padding:1.75rem;
+  position:relative; overflow:hidden;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.metric-card::before {
+  content:''; position:absolute; top:0;left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+}
+.metric-card:hover { transform:translateY(-6px); border-color:rgba(0,212,255,0.3); box-shadow:var(--glow); }
+.metric-num {
+  font-family:'Orbitron', monospace;
+  font-size:2.5rem; font-weight:900;
+  color:var(--accent); text-shadow:0 0 20px var(--accent);
+  line-height:1;
+  margin-bottom:0.4rem;
+}
+.metric-lbl { font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
+
+/* SKILLS */
+.skills-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem; }
+.skill-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius:10px; padding:1.75rem;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  position:relative; overflow:hidden;
+}
+.skill-group::after {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at 50% 0%, rgba(0,212,255,0.04), transparent 70%);
+  pointer-events:none;
+}
+.skill-group:hover { transform:translateY(-6px) scale(1.01); border-color:rgba(0,212,255,0.25); box-shadow:var(--glow); }
+.sg-icon { font-size:1.8rem; margin-bottom:1rem; }
+.sg-title { font-family:'Orbitron', monospace; font-size:0.8rem; font-weight:700; color:var(--accent); letter-spacing:0.1em; margin-bottom:1rem; }
+.sg-tags { display:flex; flex-wrap:wrap; gap:0.4rem; }
+.sg-tag {
+  padding:0.3rem 0.7rem;
+  background:rgba(0,212,255,0.06);
+  border:1px solid rgba(0,212,255,0.15);
+  border-radius:2px;
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.62rem; color:var(--text); letter-spacing:0.08em;
+}
+
+/* EXPERIENCE CARD */
+.exp-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  position:relative;
+}
+.exp-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background: linear-gradient(to bottom, var(--accent), var(--accent2));
+}
+.exp-header {
+  padding:2.5rem 2.5rem 2rem;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:flex-start; justify-content:space-between; gap:2rem;
+}
+.exp-meta {}
+.exp-company { font-family:'Orbitron', monospace; font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:0.3rem; }
+.exp-role { font-size:0.8rem; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; font-family:'Share Tech Mono', monospace; }
+.exp-date {
+  font-family:'Share Tech Mono', monospace;
+  font-size:0.7rem; color:var(--muted);
+  background:rgba(0,212,255,0.06);
+  border:1px solid var(--border);
+  padding:0.4rem 0.9rem; border-radius:2px;
+  white-space:nowrap;
+}
+.exp-body { padding:2.5rem; }
+.exp-highlights { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; margin-bottom:2rem; }
+.exp-hl {
+  display:flex; gap:1rem; align-items:flex-start;
+  padding:1.25rem;
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border); border-radius:8px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.exp-hl:hover { border-color:rgba(0,212,255,0.2); transform:translateY(-3px); }
+.exp-hl-icon { font-size:1.3rem; flex-shrink:0; }
+.exp-hl-title { font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:0.25rem; }
+.exp-hl-text { font-size:0.76rem; color:var(--muted); line-height:1.7; }
+.exp-tags { display:flex; flex-wrap:wrap; gap:0.4rem; }
+.exp-tag {
+  padding:0.25rem 0.75rem;
+  background:rgba(112,0,255,0.1);
+  border:1px solid rgba(112,0,255,0.25);
+  border-radius:2px;
+  font-size:0.62rem; color:#b084ff;
+  font-family:'Share Tech Mono', monospace;
+  text-transform:uppercase; letter-spacing:0.08em;
+}
+
+/* PROJECTS */
+.proj-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1.5rem; }
+.proj-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px; padding:2rem;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  position:relative; overflow:hidden;
+}
+.proj-card::before {
+  content:''; position:absolute; top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  transform:scaleX(0); transform-origin:left;
+  transition: transform 0.4s;
+}
+.proj-card:hover::before { transform:scaleX(1); }
+.proj-card:hover { transform:translateY(-8px); border-color:rgba(0,212,255,0.2); box-shadow:var(--glow); }
+.proj-num { font-family:'Orbitron', monospace; font-size:0.65rem; color:var(--accent); letter-spacing:0.2em; margin-bottom:1rem; }
+.proj-title { font-family:'Orbitron', monospace; font-size:1rem; font-weight:700; color:#fff; margin-bottom:0.75rem; }
+.proj-desc { font-size:0.83rem; color:var(--muted); line-height:1.8; margin-bottom:1.25rem; }
+.proj-tags { display:flex; flex-wrap:wrap; gap:0.35rem; }
+.proj-tag {
+  padding:0.2rem 0.6rem;
+  background:rgba(0,212,255,0.06);
+  border:1px solid rgba(0,212,255,0.15);
+  border-radius:2px;
+  font-size:0.6rem; color:var(--text);
+  font-family:'Share Tech Mono', monospace;
+}
+
+/* EDUCATION */
+.edu-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem; }
+.edu-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px; padding:1.75rem;
+  position:relative; overflow:hidden;
+  transition: transform 0.3s, border-color 0.3s;
+}
+.edu-card::after { content:''; position:absolute; top:-40px; right:-40px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,212,255,0.06), transparent 70%); border-radius:50%; }
+.edu-card:hover { transform:translateY(-5px); border-color:rgba(0,212,255,0.25); }
+.edu-icon { font-size:1.5rem; margin-bottom:1rem; }
+.edu-degree { font-family:'Orbitron', monospace; font-size:0.9rem; font-weight:700; color:#fff; margin-bottom:0.3rem; }
+.edu-inst { font-size:0.8rem; color:var(--accent); margin-bottom:0.25rem; }
+.edu-year { font-size:0.72rem; color:var(--muted); font-family:'Share Tech Mono', monospace; }
+
+/* CONTACT */
+.contact-inner {
+  display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;
+}
+.contact-left {}
+.contact-desc { font-size:1.05rem; color:var(--muted); line-height:1.9; margin-bottom:2rem; }
+.contact-links { display:flex; flex-direction:column; gap:1rem; }
+.contact-link {
+  display:flex; align-items:center; gap:1rem;
+  padding:1rem 1.5rem;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  text-decoration:none;
+  transition: all 0.3s; color:var(--text);
+}
+.contact-link:hover { border-color:rgba(0,212,255,0.3); transform:translateX(8px); box-shadow:var(--glow); }
+.cl-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.cl-icon-cyan { background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.25); color:var(--accent); }
+.cl-icon-purple { background:rgba(112,0,255,0.1); border:1px solid rgba(112,0,255,0.25); color:#b084ff; }
+.cl-icon-blue { background:rgba(0,119,181,0.1); border:1px solid rgba(0,119,181,0.25); color:#60a8d0; }
+.cl-icon-green { background:rgba(37,211,102,0.1); border:1px solid rgba(37,211,102,0.25); color:#25d366; }
+.cl-text {}
+.cl-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.15em; font-family:'Share Tech Mono', monospace; }
+.cl-value { font-size:0.9rem; color:var(--text); margin-top:0.1rem; }
+
+/* ACHIEVEMENT BANNER */
+.achievement-banner {
+  background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(112,0,255,0.06));
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius:12px; padding:2.5rem;
+  position:relative; overflow:hidden;
+}
+.achievement-banner::before {
+  content:''; position:absolute; top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  animation: shimmer 3s linear infinite;
+  background-size:200%;
+}
+@keyframes shimmer { to { background-position:200%; } }
+.ab-icon { font-size:2rem; margin-bottom:1rem; }
+.ab-title { font-family:'Orbitron', monospace; font-size:1rem; font-weight:700; color:#fff; margin-bottom:0.75rem; }
+.ab-text { font-size:0.88rem; color:var(--muted); line-height:1.8; }
+
+/* FOOTER */
+footer {
+  position:relative; z-index:2;
+  padding:2rem 4rem;
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(2,4,9,0.6);
+  backdrop-filter:blur(20px);
+}
+.footer-brand {
+  font-family:'Orbitron', monospace;
+  font-size:0.85rem; font-weight:800;
+  color:var(--accent); text-shadow:0 0 15px var(--accent);
+  text-decoration:none;
+}
+.footer-copy { font-family:'Share Tech Mono', monospace; font-size:0.7rem; color:var(--muted); letter-spacing:0.1em; }
+
+/* FADE ANIMATIONS */
+.fade-up { opacity:0; transform:translateY(40px); transition:opacity 0.8s ease, transform 0.8s ease; }
+.fade-up.visible { opacity:1; transform:translateY(0); }
+
+/* DIVIDER */
+.divider {
+  height:1px;
+  background:linear-gradient(to right, transparent, rgba(0,212,255,0.2), transparent);
+  margin:0 4rem;
+  position:relative; z-index:2;
+}
+
+/* GRID LINES BG */
+.section-grid {
+  position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+  opacity:0.03;
+  background-image:
+    linear-gradient(rgba(0,212,255,1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,1) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* CONTACT CENTERED */
+.contact-centered {
+  max-width: 600px; margin: 0 auto;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2rem;
+}
+.contact-desc { font-size:1.05rem; color:var(--muted); line-height:1.9; }
+.contact-email-btn {
+  display: inline-flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 2.5rem;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.25);
+  border-radius: 8px;
+  color: var(--accent);
+  text-decoration: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  transition: all 0.3s;
+}
+.contact-email-btn:hover { border-color: var(--accent); box-shadow: var(--glow); transform: translateY(-3px); }
+.ceb-icon { font-size: 1.2rem; }
+.contact-resume-row { display: flex; gap: 1rem; }
+
+/* ============================================
+   3D PRELOADER
+   ============================================ */
+#preloader {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #020409;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+#preloader.hide {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.05);
+}
+#preloader-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.preloader-ui {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 2rem;
+}
+.preloader-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(0,212,255,0.8), 0 0 80px rgba(0,212,255,0.4);
+  animation: logoPulse 2s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { text-shadow: 0 0 40px rgba(0,212,255,0.8), 0 0 80px rgba(0,212,255,0.3); }
+  50% { text-shadow: 0 0 60px rgba(0,212,255,1), 0 0 120px rgba(0,212,255,0.6), 0 0 200px rgba(112,0,255,0.3); }
+}
+.preloader-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem; letter-spacing: 0.3em;
+  color: rgba(0,212,255,0.6);
+  text-transform: uppercase;
+}
+/* HEXAGONAL SPINNER */
+.hex-spinner {
+  position: relative; width: 100px; height: 100px;
+}
+.hex-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.hex-ring:nth-child(1) {
+  border-top-color: var(--accent);
+  border-right-color: rgba(0,212,255,0.2);
+  animation: hexspin1 1.2s linear infinite;
+  box-shadow: 0 0 20px rgba(0,212,255,0.4);
+}
+.hex-ring:nth-child(2) {
+  inset: 12px;
+  border-bottom-color: #7000ff;
+  border-left-color: rgba(112,0,255,0.2);
+  animation: hexspin2 0.9s linear infinite reverse;
+  box-shadow: inset 0 0 15px rgba(112,0,255,0.3);
+}
+.hex-ring:nth-child(3) {
+  inset: 24px;
+  border-top-color: #ff006e;
+  border-right-color: rgba(255,0,110,0.2);
+  animation: hexspin1 0.7s linear infinite;
+  box-shadow: 0 0 10px rgba(255,0,110,0.3);
+}
+.hex-core {
+  position: absolute; inset: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,255,0.3), rgba(112,0,255,0.2), transparent);
+  animation: corebeat 1.5s ease-in-out infinite;
+}
+@keyframes hexspin1 { to { transform: rotate(360deg); } }
+@keyframes hexspin2 { to { transform: rotate(360deg); } }
+@keyframes corebeat { 0%,100%{transform:scale(0.8);opacity:0.6} 50%{transform:scale(1.2);opacity:1} }
+
+/* PROGRESS BAR */
+.preloader-progress-wrap {
+  width: 280px;
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.preloader-bar-bg {
+  height: 2px;
+  background: rgba(0,212,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.preloader-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #7000ff, var(--accent));
+  background-size: 200%;
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.1s linear;
+  animation: barshine 1.5s linear infinite;
+  box-shadow: 0 0 10px rgba(0,212,255,0.8);
+}
+@keyframes barshine { to { background-position: 200%; } }
+.preloader-status {
+  display: flex; justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem; letter-spacing: 0.15em;
+  color: rgba(0,212,255,0.5);
+}
+.preloader-status-text { color: rgba(0,212,255,0.7); }
+.preloader-pct { color: var(--accent); }
+
+/* CORNER DECORATIONS */
+.pre-corner {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-color: rgba(0,212,255,0.3);
+  border-style: solid;
+}
+.pre-corner-tl { top:24px; left:24px; border-width:2px 0 0 2px; animation: cornerGlow 2s ease-in-out infinite; }
+.pre-corner-tr { top:24px; right:24px; border-width:2px 2px 0 0; animation: cornerGlow 2s ease-in-out infinite 0.5s; }
+.pre-corner-bl { bottom:24px; left:24px; border-width:0 0 2px 2px; animation: cornerGlow 2s ease-in-out infinite 1s; }
+.pre-corner-br { bottom:24px; right:24px; border-width:0 2px 2px 0; animation: cornerGlow 2s ease-in-out infinite 1.5s; }
+@keyframes cornerGlow {
+  0%,100% { border-color: rgba(0,212,255,0.3); }
+  50% { border-color: rgba(0,212,255,0.9); box-shadow: 0 0 15px rgba(0,212,255,0.5); }
+}
+
+/* SCANLINE on preloader */
+#preloader::after {
+  content:'';
+  position:absolute; inset:0; z-index:1;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+  pointer-events:none;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:rgba(0,212,255,0.3); border-radius:4px; }
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav { padding:1rem 1.5rem; }
+  .nav-links { display:none; }
+  .hero { padding:7rem 1.5rem 3rem; }
+  .hero-inner { grid-template-columns:1fr; gap:3rem; }
+  .holo-card { width:320px; height:420px; }
+  section { padding:4rem 1.5rem; }
+  .about-grid, .contact-inner { grid-template-columns:1fr; gap:2.5rem; }
+  .metrics { grid-template-columns:1fr 1fr; }
+  footer { padding:1.5rem; flex-direction:column; gap:0.75rem; text-align:center; }
+  .divider { margin:0 1.5rem; }
+}
+</style>
+</head>
+<body>
+<!-- 3D PRELOADER -->
+<div id="preloader">
+  <canvas id="preloader-canvas"></canvas>
+  <div class="pre-corner pre-corner-tl"></div>
+  <div class="pre-corner pre-corner-tr"></div>
+  <div class="pre-corner pre-corner-bl"></div>
+  <div class="pre-corner pre-corner-br"></div>
+  <div class="preloader-ui">
+    <div class="preloader-logo">SJ.DEV</div>
+    <div class="preloader-sub">Initializing System...</div>
+    <div class="hex-spinner">
+      <div class="hex-ring"></div>
+      <div class="hex-ring"></div>
+      <div class="hex-ring"></div>
+      <div class="hex-core"></div>
+    </div>
+    <div class="preloader-progress-wrap">
+      <div class="preloader-bar-bg">
+        <div class="preloader-bar-fill" id="preloaderBar"></div>
+      </div>
+      <div class="preloader-status">
+        <span class="preloader-status-text" id="preloaderStatus">LOADING MODULES</span>
+        <span class="preloader-pct" id="preloaderPct">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">SJ.DEV</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <div class="badge-dot"></div>
+        Available for Opportunities
+      </div>
+      <h1 class="hero-name">
+        <div class="glitch" data-text="SHAYAN">SHAYAN</div><br>
+        <div class="glitch" data-text="JOARDAR">JOARDAR</div>
+      </h1>
+      <div class="hero-accent-line">// .NET Desktop Application Developer</div>
+      <p class="hero-desc">
+        4+ years engineering <strong>intelligent automation solutions</strong> at Wipro Limited.
+        Specialist in WPF, WinForms, MVVM architecture, REST API integration,
+        Selenium automation and MongoDB — delivering enterprise-grade software
+        that drives measurable operational efficiency.
+      </p>
+      <div class="hero-cta">
+        <a href="ShayanJoardarResume.pdf" download class="btn btn-dl">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Resume
+        </a>
+        <a href="https://github.com/RjGAmer" target="_blank" class="btn btn-gh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          GitHub
+        </a>
+        <a href="https://www.linkedin.com/in/shayan-joardar/" target="_blank" class="btn btn-li">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://wa.me/918918167484" target="_blank" class="btn btn-wa">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- HOLOGRAPHIC CARD -->
+    <div class="hero-visual">
+      <div class="holo-card" id="holoCard">
+        <div class="holo-card-inner">
+          <div class="card-corner card-corner-tl"></div>
+          <div class="card-corner card-corner-tr"></div>
+          <div class="card-corner card-corner-bl"></div>
+          <div class="card-corner card-corner-br"></div>
+          <div class="card-avatar">SJ</div>
+          <div class="card-name">SHAYAN JOARDAR</div>
+          <div class="card-role">// .NET Developer</div>
+          <div class="card-stats">
+            <div class="stat-box">
+              <span class="stat-num">4+</span>
+              <span class="stat-lbl">Years Exp.</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num">10+</span>
+              <span class="stat-lbl">Projects</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num">20+</span>
+              <span class="stat-lbl">Skills</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num">∞</span>
+              <span class="stat-lbl">Automation</span>
+            </div>
+          </div>
+          <div class="card-skills">
+            <span class="skill-chip">WPF</span>
+            <span class="skill-chip">C#</span>
+            <span class="skill-chip">MVVM</span>
+            <span class="skill-chip">Selenium</span>
+            <span class="skill-chip">MongoDB</span>
+            <span class="skill-chip">.NET</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-grid"></div>
+  <div class="container">
+    <div class="sec-label">01 // About</div>
+    <h2 class="sec-title">Crafting <span>Intelligent Systems</span><br>for the Enterprise</h2>
+    <div class="about-grid fade-up">
+      <div class="about-text">
+        <p>
+          I'm a <strong>.NET Desktop Application Developer</strong> with 4+ years of experience at 
+          <strong>Wipro Limited</strong>, specializing in building automation solutions that transform 
+          enterprise healthcare workflows. My work bridges code and operational reality — 
+          designing tools that people actually rely on.
+        </p>
+        <p>
+          My expertise spans <strong>WPF and WinForms desktop development</strong>, custom DLL architecture, 
+          plugin-based systems with dynamic loading, and seamless REST API integrations.
+          I bring a deep understanding of <strong>MVVM and MVC patterns</strong>, keeping code 
+          modular, testable, and maintainable at scale.
+        </p>
+        <p>
+          Beyond the desktop, I automate complex web workflows with <strong>Selenium WebDriver</strong>, 
+          manage configuration data in <strong>MongoDB</strong>, and implement Regex-based parsing 
+          for high-precision data extraction — enabling quality compliance and measurable FTE reduction 
+          across enterprise operations.
+        </p>
+      </div>
+      <div class="metrics">
+        <div class="metric-card fade-up">
+          <div class="metric-num">4+</div>
+          <div class="metric-lbl">Years at Wipro</div>
+        </div>
+        <div class="metric-card fade-up">
+          <div class="metric-num">10+</div>
+          <div class="metric-lbl">Automation Tools Built</div>
+        </div>
+        <div class="metric-card fade-up">
+          <div class="metric-num">↑</div>
+          <div class="metric-lbl">Turnaround Time Improved</div>
+        </div>
+        <div class="metric-card fade-up">
+          <div class="metric-num">FTE</div>
+          <div class="metric-lbl">Reduction Achieved</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="container">
+    <div class="sec-label">02 // Skills</div>
+    <h2 class="sec-title">Tech <span>Arsenal</span></h2>
+    <div class="skills-grid fade-up">
+      <div class="skill-group">
+        <div class="sg-icon">🖥️</div>
+        <div class="sg-title">Desktop Development</div>
+        <div class="sg-tags">
+          <span class="sg-tag">WPF</span>
+          <span class="sg-tag">WinForms</span>
+          <span class="sg-tag">XAML</span>
+          <span class="sg-tag">MVVM</span>
+          <span class="sg-tag">MVC</span>
+          <span class="sg-tag">Custom DLL</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <div class="sg-icon">⚙️</div>
+        <div class="sg-title">Core Languages & Frameworks</div>
+        <div class="sg-tags">
+          <span class="sg-tag">C#</span>
+          <span class="sg-tag">.NET Framework</span>
+          <span class="sg-tag">.NET Core</span>
+          <span class="sg-tag">ASP.NET MVC</span>
+          <span class="sg-tag">JSON</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <div class="sg-icon">🤖</div>
+        <div class="sg-title">Automation & Testing</div>
+        <div class="sg-tags">
+          <span class="sg-tag">Selenium WebDriver</span>
+          <span class="sg-tag">Outlook Automation</span>
+          <span class="sg-tag">PDF Processing</span>
+          <span class="sg-tag">Aspose</span>
+          <span class="sg-tag">Regex</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <div class="sg-icon">🗄️</div>
+        <div class="sg-title">Data & Integration</div>
+        <div class="sg-tags">
+          <span class="sg-tag">MongoDB</span>
+          <span class="sg-tag">REST API</span>
+          <span class="sg-tag">JSON</span>
+          <span class="sg-tag">Modular Architecture</span>
+          <span class="sg-tag">Plugin Systems</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <div class="sg-icon">🔧</div>
+        <div class="sg-title">Tools & DevOps</div>
+        <div class="sg-tags">
+          <span class="sg-tag">Git</span>
+          <span class="sg-tag">GitHub</span>
+          <span class="sg-tag">Visual Studio</span>
+          <span class="sg-tag">Dynamic DLL Loading</span>
+        </div>
+      </div>
+      <div class="skill-group">
+        <div class="sg-icon">🏥</div>
+        <div class="sg-title">Domain Expertise</div>
+        <div class="sg-tags">
+          <span class="sg-tag">Healthcare Automation</span>
+          <span class="sg-tag">Enterprise Workflows</span>
+          <span class="sg-tag">Quality Compliance</span>
+          <span class="sg-tag">Revenue Enablement</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-grid"></div>
+  <div class="container">
+    <div class="sec-label">03 // Experience</div>
+    <h2 class="sec-title">Work <span>History</span></h2>
+    <div class="exp-card fade-up">
+      <div class="exp-header">
+        <div class="exp-meta">
+          <div class="exp-company">Wipro Limited</div>
+          <div class="exp-role">Software Developer — Automation Specialist</div>
+        </div>
+        <div class="exp-date">Jan 2021 — Present</div>
+      </div>
+      <div class="exp-body">
+        <div class="exp-highlights">
+          <div class="exp-hl">
+            <div class="exp-hl-icon">🖥️</div>
+            <div>
+              <div class="exp-hl-title">Desktop Automation Engineering</div>
+              <div class="exp-hl-text">Designed and developed .NET desktop automation tools using WPF and WinForms; built reusable custom control DLLs for modular, scalable solutions with plugin-based dynamic loading.</div>
+            </div>
+          </div>
+          <div class="exp-hl">
+            <div class="exp-hl-icon">🌐</div>
+            <div>
+              <div class="exp-hl-title">Web & API Automation</div>
+              <div class="exp-hl-text">Automated web-based workflows via Selenium WebDriver; integrated REST APIs for secure external system communication; implemented Outlook email automation for notifications and reporting.</div>
+            </div>
+          </div>
+          <div class="exp-hl">
+            <div class="exp-hl-icon">📊</div>
+            <div>
+              <div class="exp-hl-title">Data Management</div>
+              <div class="exp-hl-text">Worked with MongoDB for configuration and automation data storage; applied Regex-based data validation and extraction; supported PDF processing and document automation workflows.</div>
+            </div>
+          </div>
+          <div class="exp-hl">
+            <div class="exp-hl-icon">⚡</div>
+            <div>
+              <div class="exp-hl-title">Healthcare Operations Impact</div>
+              <div class="exp-hl-text">Collaborated with operations teams to identify automation opportunities; delivered measurable turnaround improvement, quality compliance, revenue enablement, and FTE reduction.</div>
+            </div>
+          </div>
+        </div>
+        <div class="exp-tags">
+          <span class="exp-tag">C#</span>
+          <span class="exp-tag">WPF</span>
+          <span class="exp-tag">WinForms</span>
+          <span class="exp-tag">MVVM</span>
+          <span class="exp-tag">Selenium</span>
+          <span class="exp-tag">MongoDB</span>
+          <span class="exp-tag">REST API</span>
+          <span class="exp-tag">Aspose</span>
+          <span class="exp-tag">Regex</span>
+          <span class="exp-tag">Git</span>
+          <span class="exp-tag">.NET Framework</span>
+          <span class="exp-tag">.NET Core</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="container">
+    <div class="sec-label">04 // Projects</div>
+    <h2 class="sec-title">Featured <span>Work</span></h2>
+    <div class="proj-grid fade-up">
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_001</div>
+        <div class="proj-title">Enterprise Healthcare Automation Suite</div>
+        <div class="proj-desc">Comprehensive .NET desktop automation platform for healthcare workflows, integrating WPF/WinForms with a plugin-based architecture for dynamic module loading and scalability.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">WPF</span><span class="proj-tag">WinForms</span><span class="proj-tag">C#</span><span class="proj-tag">Plugin Architecture</span>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_002</div>
+        <div class="proj-title">Selenium Web Workflow Automator</div>
+        <div class="proj-desc">Built automated browser-based workflows using Selenium WebDriver for enterprise healthcare operations, reducing manual processing time and ensuring compliance standards.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">Selenium</span><span class="proj-tag">C#</span><span class="proj-tag">.NET</span><span class="proj-tag">WebDriver</span>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_003</div>
+        <div class="proj-title">REST API Integration Framework</div>
+        <div class="proj-desc">Custom modular DLL library for standardized REST API communication between desktop applications and external enterprise systems, with secure token-based authentication.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">REST API</span><span class="proj-tag">JSON</span><span class="proj-tag">Custom DLL</span><span class="proj-tag">C#</span>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_004</div>
+        <div class="proj-title">PDF Document Automation Engine</div>
+        <div class="proj-desc">Automated PDF processing and document generation pipeline using Aspose tools and Regex-based data extraction, enabling high-volume document workflows with quality validation.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">Aspose</span><span class="proj-tag">PDF</span><span class="proj-tag">Regex</span><span class="proj-tag">C#</span>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_005</div>
+        <div class="proj-title">MongoDB Config & Data Layer</div>
+        <div class="proj-desc">Designed and implemented a flexible MongoDB-backed configuration and automation data storage layer for enterprise desktop applications, supporting runtime dynamic configuration.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">MongoDB</span><span class="proj-tag">C#</span><span class="proj-tag">.NET Core</span><span class="proj-tag">Config</span>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-num">PROJECT_006</div>
+        <div class="proj-title">Outlook Email Automation System</div>
+        <div class="proj-desc">Process notification and reporting automation via Outlook email integration, triggering contextual alerts and scheduled reports based on automation pipeline events and thresholds.</div>
+        <div class="proj-tags">
+          <span class="proj-tag">Outlook</span><span class="proj-tag">C#</span><span class="proj-tag">MVVM</span><span class="proj-tag">Automation</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-grid"></div>
+  <div class="container">
+    <div class="sec-label">05 // Education</div>
+    <h2 class="sec-title">Academic <span>Background</span></h2>
+    <div class="edu-grid fade-up">
+      <div class="edu-card">
+        <div class="edu-icon">🎓</div>
+        <div class="edu-degree">Bachelor of Technology (B.Tech)</div>
+        <div class="edu-inst">M.A.K.A.U.T</div>
+        <div class="edu-year">// 2019 — 2023</div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-icon">📐</div>
+        <div class="edu-degree">Diploma — Mechanical Engineering</div>
+        <div class="edu-inst">Kanayapur Polytechnic (W.B.S.C.T.E)</div>
+        <div class="edu-year">// Completed 2019</div>
+      </div>
+      <div class="edu-card">
+        <div class="edu-icon">📚</div>
+        <div class="edu-degree">Higher Secondary (Class XII)</div>
+        <div class="edu-inst">W.B.C.H.S.E</div>
+        <div class="edu-year">// Completed 2016</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ACHIEVEMENT -->
+<section>
+  <div class="container">
+    <div class="achievement-banner fade-up">
+      <div class="ab-icon">⚡</div>
+      <div class="ab-title">KEY ACHIEVEMENT — OPERATIONAL EXCELLENCE AT WIPRO</div>
+      <div class="ab-text">
+        Automation initiatives directly contributed to improved turnaround time, higher quality compliance, 
+        revenue enablement support, and measurable FTE reduction across operational workflows — 
+        demonstrating the tangible business impact of intelligent automation in healthcare enterprise environments.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-grid"></div>
+  <div class="container">
+    <div class="sec-label">06 // Contact</div>
+    <h2 class="sec-title">Let's <span>Connect</span></h2>
+    <div class="contact-centered fade-up">
+      <p class="contact-desc">
+        Open to exciting .NET development roles, automation engineering opportunities,
+        and enterprise software projects. Feel free to reach out via email.
+      </p>
+      <a href="mailto:shayanjoardar2@gmail.com" class="contact-email-btn">
+        <span class="ceb-icon">✉</span>
+        <span>shayanjoardar2@gmail.com</span>
+      </a>
+      <div class="contact-resume-row">
+        <a href="ShayanJoardarResume.pdf" download class="btn btn-dl">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Resume
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-brand">SHAYAN JOARDAR</a>
+  <div class="footer-copy">© 2025 // .NET Developer // Burnpur, West Bengal, India</div>
+</footer>
+
+<script>
+// ===== 3D PRELOADER =====
+(function() {
+  const preEl = document.getElementById('preloader');
+  const pCanvas = document.getElementById('preloader-canvas');
+  const bar = document.getElementById('preloaderBar');
+  const pct = document.getElementById('preloaderPct');
+  const statusEl = document.getElementById('preloaderStatus');
+
+  // Preloader Three.js scene
+  const pRenderer = new THREE.WebGLRenderer({ canvas: pCanvas, alpha: true, antialias: true });
+  pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  pRenderer.setSize(window.innerWidth, window.innerHeight);
+
+  const pScene = new THREE.Scene();
+  const pCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+  pCamera.position.z = 40;
+
+  // Central rotating DNA helix / torus knot
+  const torusKnotGeo = new THREE.TorusKnotGeometry(8, 1.2, 200, 16, 3, 5);
+  const torusKnotMat = new THREE.MeshBasicMaterial({
+    color: 0x00d4ff, wireframe: true, transparent: true, opacity: 0.18
+  });
+  const torusKnot = new THREE.Mesh(torusKnotGeo, torusKnotMat);
+  pScene.add(torusKnot);
+
+  // Glowing solid torus knot underneath
+  const tkSolidGeo = new THREE.TorusKnotGeometry(8, 0.25, 200, 16, 3, 5);
+  const tkSolidMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.6 });
+  const tkSolid = new THREE.Mesh(tkSolidGeo, tkSolidMat);
+  pScene.add(tkSolid);
+
+  // Purple inner torus knot
+  const tkInnerGeo = new THREE.TorusKnotGeometry(4.5, 0.15, 150, 12, 2, 5);
+  const tkInnerMat = new THREE.MeshBasicMaterial({ color: 0x7000ff, transparent: true, opacity: 0.7 });
+  const tkInner = new THREE.Mesh(tkInnerGeo, tkInnerMat);
+  pScene.add(tkInner);
+
+  // Outer rings
+  const rings3D = [];
+  const ringConfigs = [
+    { r: 18, tube: 0.05, color: 0x00d4ff, rx: Math.PI/4, ry: 0, op: 0.25 },
+    { r: 22, tube: 0.04, color: 0x7000ff, rx: Math.PI/3, ry: Math.PI/5, op: 0.2 },
+    { r: 26, tube: 0.03, color: 0x00d4ff, rx: Math.PI/6, ry: Math.PI/3, op: 0.15 },
+    { r: 14, tube: 0.06, color: 0xff006e, rx: -Math.PI/5, ry: Math.PI/4, op: 0.2 },
+  ];
+  ringConfigs.forEach((cfg, i) => {
+    const g = new THREE.TorusGeometry(cfg.r, cfg.tube, 8, 120);
+    const m = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.op });
+    const mesh = new THREE.Mesh(g, m);
+    mesh.rotation.x = cfg.rx; mesh.rotation.y = cfg.ry;
+    pScene.add(mesh);
+    rings3D.push({ mesh, speed: 0.003 + i * 0.001, axis: i % 2 === 0 ? 'y' : 'x' });
+  });
+
+  // Particle burst
+  const pCount = 1500;
+  const pPos = new Float32Array(pCount * 3);
+  const pCol = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 15 + Math.random() * 30;
+    pPos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+    pPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pPos[i*3+2] = r * Math.cos(phi);
+    const c = Math.random() < 0.6 ? [0,0.83,1] : [0.43,0,1];
+    pCol[i*3]=c[0]; pCol[i*3+1]=c[1]; pCol[i*3+2]=c[2];
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+  const pMat = new THREE.PointsMaterial({ size: 0.2, vertexColors: true, transparent: true, opacity: 0.6 });
+  pScene.add(new THREE.Points(pGeo, pMat));
+
+  // Grid planes
+  const pgHelper = new THREE.GridHelper(100, 30, 0x002233, 0x001120);
+  pgHelper.material.transparent = true; pgHelper.material.opacity = 0.2;
+  pgHelper.position.y = -20;
+  pScene.add(pgHelper);
+
+  let pClock = 0;
+  const pAnimate = () => {
+    if (!preEl || preEl.classList.contains('hide')) return;
+    requestAnimationFrame(pAnimate);
+    pClock += 0.012;
+    torusKnot.rotation.x += 0.006; torusKnot.rotation.y += 0.009;
+    tkSolid.rotation.x += 0.006; tkSolid.rotation.y += 0.009;
+    tkInner.rotation.x -= 0.01; tkInner.rotation.y += 0.007;
+    rings3D.forEach(r => { r.mesh.rotation[r.axis] += r.speed; });
+    pCamera.position.x = Math.sin(pClock * 0.3) * 5;
+    pCamera.position.y = Math.cos(pClock * 0.2) * 3;
+    pCamera.lookAt(0, 0, 0);
+    pgHelper.position.z = Math.sin(pClock * 0.5) * 5;
+    pMat.opacity = 0.4 + Math.sin(pClock) * 0.2;
+    pRenderer.render(pScene, pCamera);
+  };
+  pAnimate();
+
+  // Progress sequence
+  const phases = [
+    { label: 'LOADING MODULES', target: 20 },
+    { label: 'INITIALIZING 3D ENGINE', target: 45 },
+    { label: 'COMPILING SHADERS', target: 65 },
+    { label: 'BUILDING INTERFACE', target: 82 },
+    { label: 'LAUNCHING SYSTEM', target: 100 },
+  ];
+
+  let current = 0, phaseIdx = 0;
+  const tick = setInterval(() => {
+    const phase = phases[phaseIdx];
+    if (current < phase.target) {
+      current += Math.random() * 3 + 0.5;
+      if (current > phase.target) current = phase.target;
+    } else {
+      phaseIdx++;
+      if (phaseIdx >= phases.length) {
+        clearInterval(tick);
+        setTimeout(() => {
+          preEl.classList.add('hide');
+          setTimeout(() => { preEl.style.display = 'none'; pRenderer.dispose(); }, 900);
+        }, 400);
+        return;
+      }
+    }
+    const clamped = Math.min(100, Math.round(current));
+    bar.style.width = clamped + '%';
+    pct.textContent = clamped + '%';
+    if (phases[phaseIdx]) statusEl.textContent = phases[phaseIdx].label;
+  }, 40);
+
+  window.addEventListener('resize', () => {
+    pCamera.aspect = window.innerWidth / window.innerHeight;
+    pCamera.updateProjectionMatrix();
+    pRenderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+
+// ===== THREE.JS PARTICLE FIELD =====
+const canvas = document.getElementById('bg-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 30;
+
+// PARTICLE FIELD
+const particleCount = 2500;
+const positions = new Float32Array(particleCount * 3);
+const colors = new Float32Array(particleCount * 3);
+const velocities = [];
+
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3]     = (Math.random() - 0.5) * 120;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 60;
+
+  const rand = Math.random();
+  if (rand < 0.6) {
+    // Cyan
+    colors[i * 3] = 0; colors[i * 3 + 1] = 0.82; colors[i * 3 + 2] = 1;
+  } else if (rand < 0.85) {
+    // Purple
+    colors[i * 3] = 0.43; colors[i * 3 + 1] = 0; colors[i * 3 + 2] = 1;
+  } else {
+    // White
+    colors[i * 3] = 0.7; colors[i * 3 + 1] = 0.85; colors[i * 3 + 2] = 1;
+  }
+
+  velocities.push({
+    x: (Math.random() - 0.5) * 0.006,
+    y: (Math.random() - 0.5) * 0.006,
+    z: (Math.random() - 0.5) * 0.004
+  });
+}
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+const mat = new THREE.PointsMaterial({
+  size: 0.18,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.7,
+  sizeAttenuation: true
+});
+
+const particles = new THREE.Points(geo, mat);
+scene.add(particles);
+
+// GRID LINES
+const gridHelper = new THREE.GridHelper(200, 40, 0x002233, 0x001122);
+gridHelper.position.y = -25;
+gridHelper.material.opacity = 0.15;
+gridHelper.material.transparent = true;
+scene.add(gridHelper);
+
+// CONNECTION LINES (sparse)
+const lineMat = new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.08 });
+for (let i = 0; i < 60; i++) {
+  const pts = [
+    new THREE.Vector3((Math.random()-0.5)*100, (Math.random()-0.5)*60, (Math.random()-0.5)*40),
+    new THREE.Vector3((Math.random()-0.5)*100, (Math.random()-0.5)*60, (Math.random()-0.5)*40)
+  ];
+  const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+  scene.add(new THREE.Line(lineGeo, lineMat));
+}
+
+// FLOATING RINGS
+const rings = [];
+for (let i = 0; i < 4; i++) {
+  const rGeo = new THREE.TorusGeometry(6 + i * 4, 0.04, 8, 80);
+  const rMat = new THREE.MeshBasicMaterial({
+    color: i % 2 === 0 ? 0x00d4ff : 0x7000ff,
+    transparent: true, opacity: 0.12
+  });
+  const ring = new THREE.Mesh(rGeo, rMat);
+  ring.rotation.x = Math.random() * Math.PI;
+  ring.rotation.y = Math.random() * Math.PI;
+  ring.position.set((Math.random()-0.5)*30, (Math.random()-0.5)*20, -10 - i*5);
+  scene.add(ring);
+  rings.push({ mesh: ring, speed: 0.002 + Math.random()*0.003, axis: ['x','y','z'][Math.floor(Math.random()*3)] });
+}
+
+let mouseX = 0, mouseY = 0;
+let targetX = 0, targetY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+let clock = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  clock += 0.008;
+
+  // Smooth camera mouse follow
+  targetX += (mouseX * 3 - targetX) * 0.04;
+  targetY += (-mouseY * 2 - targetY) * 0.04;
+  camera.position.x = targetX;
+  camera.position.y = targetY;
+
+  // Drift particles
+  const pos = geo.attributes.position.array;
+  for (let i = 0; i < particleCount; i++) {
+    pos[i*3]   += velocities[i].x;
+    pos[i*3+1] += velocities[i].y;
+    pos[i*3+2] += velocities[i].z;
+    if (Math.abs(pos[i*3])   > 60) velocities[i].x *= -1;
+    if (Math.abs(pos[i*3+1]) > 40) velocities[i].y *= -1;
+    if (Math.abs(pos[i*3+2]) > 30) velocities[i].z *= -1;
+  }
+  geo.attributes.position.needsUpdate = true;
+
+  // Rotate rings
+  rings.forEach(r => {
+    r.mesh.rotation[r.axis] += r.speed;
+    r.mesh.material.opacity = 0.08 + Math.sin(clock + r.mesh.position.x) * 0.05;
+  });
+
+  // Pulse particle opacity
+  mat.opacity = 0.55 + Math.sin(clock * 0.5) * 0.15;
+
+  // Grid drift
+  gridHelper.position.z = Math.sin(clock * 0.3) * 3;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ===== CURSOR =====
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let cx = 0, cy = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  cx = e.clientX; cy = e.clientY;
+  cursor.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+});
+
+function animRing() {
+  rx += (cx - rx) * 0.12;
+  ry += (cy - ry) * 0.12;
+  cursorRing.style.transform = `translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+document.querySelectorAll('a, button, .metric-card, .skill-group, .proj-card, .exp-hl, .contact-link').forEach(el => {
+  el.addEventListener('mouseenter', () => cursorRing.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => cursorRing.classList.remove('hovering'));
+});
+
+// ===== SCROLL ANIMATIONS =====
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 100);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+// ===== HOLO CARD PARALLAX =====
+const holoCard = document.getElementById('holoCard');
+document.addEventListener('mousemove', e => {
+  if (!holoCard) return;
+  const rect = holoCard.getBoundingClientRect();
+  const cx2 = rect.left + rect.width / 2;
+  const cy2 = rect.top + rect.height / 2;
+  const dx = (e.clientX - cx2) / window.innerWidth;
+  const dy = (e.clientY - cy2) / window.innerHeight;
+  holoCard.style.transform = `rotateY(${dx * 20}deg) rotateX(${-dy * 15}deg) translateY(-8px)`;
+});
+document.addEventListener('mouseleave', () => {
+  if (holoCard) holoCard.style.transform = '';
+});
+
+// ===== TYPEWRITER HERO ACCENT =====
+const roles = [
+  '// .NET Desktop Application Developer',
+  '// WPF & WinForms Specialist',
+  '// Enterprise Automation Engineer',
+  '// Selenium & MongoDB Expert',
+  '// C# / MVVM / REST API Developer'
+];
+let roleIdx = 0, charIdx = 0, isDeleting = false;
+const roleEl = document.querySelector('.hero-accent-line');
+function typeWriter() {
+  if (!roleEl) return;
+  const current = roles[roleIdx];
+  if (!isDeleting) {
+    roleEl.textContent = current.slice(0, charIdx + 1);
+    charIdx++;
+    if (charIdx === current.length) { isDeleting = true; setTimeout(typeWriter, 2200); return; }
+  } else {
+    roleEl.textContent = current.slice(0, charIdx - 1);
+    charIdx--;
+    if (charIdx === 0) { isDeleting = false; roleIdx = (roleIdx + 1) % roles.length; }
+  }
+  setTimeout(typeWriter, isDeleting ? 40 : 65);
+}
+setTimeout(typeWriter, 1000);
+
+// ===== STAGGER CARDS =====
+document.querySelectorAll('.skill-group, .proj-card, .edu-card').forEach((el, i) => {
+  el.style.transitionDelay = `${i * 0.07}s`;
+});
+</script>
+</body>
+</html>
